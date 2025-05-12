@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Supabase 檔案上傳範例</title>
+</head>
+<body>
+  <h2>上傳檔案到 Supabase Storage</h2>
+  <input type="file" id="fileInput" />
+  <button onclick="uploadFile()">上傳</button>
+  <p id="result"></p>
+
+  <!-- 引入 Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    // ✅ 用你自己的 Supabase 專案資訊取代下方
+    const SUPABASE_URL = 'https://klxuoehhlpfbrsimoscd.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtseHVvZWhobHBmYnJzaW1vc2NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwMjA2NjgsImV4cCI6MjA2MjU5NjY2OH0.uCLPTF6QUpHprEjj777N4lmXGNxYaHYu8YAOa1YAOp8';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function uploadFile() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert('請先選擇檔案！');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .storage
+        .from('uploads') // 替換成你的 bucket 名稱
+        .upload('user-uploads/' + file.name, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        document.getElementById('result').innerText = '❌ 上傳失敗: ' + error.message;
+      } else {
+        // 產生公開 URL
+        const { data: publicUrl } = supabase
+          .storage
+          .from('uploads')
+          .getPublicUrl('user-uploads/' + file.name);
+
+        document.getElementById('result').innerHTML = `✅ 上傳成功！<br>檔案連結：<a href="${publicUrl.publicUrl}" target="_blank">${publicUrl.publicUrl}</a>`;
+      }
+    }
+  </script>
+</body>
+</html>
+
